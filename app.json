@@ -3,6 +3,9 @@
     "name": "quick-recipe",
     "slug": "quick-recipe",
     "version": "1.0.0",
+    "extra": {
+      "API_KEY": ""
+    },
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
