@@ -4,7 +4,6 @@ import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ImageBac
 import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini API SDK
 import Constants from 'expo-constants';
 
-
 // Sample data for popular dishes
 const popularDishes = [
   { id: '1', name: 'Spaghetti Bolognese' },
@@ -23,7 +22,7 @@ export default function App() {
     const prompt = `Please generate a list of ingredients and a recipe to prepare ${dish}.`;
 
     try {
-      const apiKey = Constants.manifest.extra.API_KEY;
+      const apiKey = '';
 // Use the API key in your fetch request
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
