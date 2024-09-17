@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, FlatList, ImageBackground, SafeAreaView, ScrollView } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  ImageBackground,
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
 import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini API SDK
 import Constants from 'expo-constants';
 
@@ -56,53 +66,70 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       {/* Background image for the app's main view */}
       <ImageBackground
-        source={{ uri: 'https://images.pexels.com/photos/1640770/pexels-photo-1640770.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }}
+        source={{
+          uri: 'https://images.pexels.com/photos/1640770/pexels-photo-1640770.jpeg',
+        }}
         style={styles.background}
         resizeMode="cover"
       >
-        {/* Scrollable content area */}
-        <ScrollView style={styles.overlay}>
-          {/* App title and tagline */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>Quick Recipe</Text>
-            <Text style={styles.tagline}>Your Personal Recipe Finder</Text>
-          </View>
+        {/* Overlay to darken the background image for better text readability */}
+        <View style={styles.overlay}>
+          {/* Scrollable content area */}
+          <ScrollView contentContainerStyle={styles.contentContainer}>
+            {/* App title and tagline */}
+            <View style={styles.titleContainer}>
+              <Text style={styles.title}>Quick Recipe</Text>
+              <Text style={styles.tagline}>Your Personal Recipe Finder</Text>
+            </View>
 
-          {/* Input field for the dish name */}
-          <View style={styles.inputCard}>
-            <Text style={styles.inputPrompt}>What would you like to cook?</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter a dish name..."
-              placeholderTextColor="#ccc"
-              value={dish}
-              onChangeText={setDish} // Update state with user's input
-            />
-            {/* Horizontal list of popular dish suggestions */}
-            <FlatList
-              data={popularDishes}
-              horizontal
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={styles.dishCard} onPress={() => setDish(item.name)}>
-                  <Text style={styles.dishText}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
+            {/* Input field for the dish name */}
+            <View style={styles.inputCard}>
+              <Text style={styles.inputPrompt}>What would you like to cook?</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter a dish name..."
+                placeholderTextColor="#ccc"
+                value={dish}
+                onChangeText={setDish} // Update state with user's input
+              />
+              {/* Horizontal list of popular dish suggestions */}
+              <FlatList
+                data={popularDishes}
+                horizontal
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.dishList}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.dishCard}
+                    onPress={() => setDish(item.name)}
+                  >
+                    <Text style={styles.dishText}>{item.name}</Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
 
-          {/* Button to trigger the recipe generation */}
-          <TouchableOpacity style={styles.cookNowButton} onPress={handleCookNow} disabled={loading}>
-            <Text style={styles.cookNowText}>{loading ? 'Generating...' : 'Cook Now!'}</Text>
-          </TouchableOpacity>
+            {/* Button to trigger the recipe generation */}
+            <TouchableOpacity
+              style={styles.cookNowButton}
+              onPress={handleCookNow}
+              disabled={loading}
+            >
+              <Text style={styles.cookNowText}>
+                {loading ? 'Generating...' : 'Cook Now!'}
+              </Text>
+            </TouchableOpacity>
 
-          {/* Display the API response (recipe or error message) */}
-          <View style={styles.responseContainer}>
-            {response ? <Text style={styles.responseText}>{response}</Text> : null}
-          </View>
-        </ScrollView>
+            {/* Display the API response (recipe or error message) */}
+            {response ? (
+              <View style={styles.responseContainer}>
+                <Text style={styles.responseText}>{response}</Text>
+              </View>
+            ) : null}
+          </ScrollView>
+        </View>
       </ImageBackground>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </SafeAreaView>
   );
 }
@@ -114,49 +141,55 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    justifyContent: 'center',
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Slightly darken the background for text readability
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Increased opacity for better readability
+  },
+  contentContainer: {
     padding: 20,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 40,
   },
   title: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: 'bold',
     color: '#fff',
   },
   tagline: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#ddd',
   },
   inputCard: {
-    marginVertical: 20,
-    paddingHorizontal: 20,
+    marginBottom: 30,
   },
   inputPrompt: {
-    fontSize: 20,
+    fontSize: 22,
     color: '#fff',
-    marginBottom: 10,
+    marginBottom: 15,
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
+    borderColor: '#fff',
     borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 15,
+    borderRadius: 25,
+    paddingHorizontal: 20,
     marginBottom: 20,
     color: '#fff',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
+  dishList: {
+    flexGrow: 0,
+  },
   dishCard: {
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 10,
+    borderRadius: 20,
     marginRight: 10,
   },
   dishText: {
@@ -167,23 +200,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#FF6347',
     borderRadius: 25,
     paddingVertical: 15,
-    paddingHorizontal: 50,
-    alignSelf: 'center',
-    marginTop: 30,
+    alignItems: 'center',
+    marginBottom: 30,
   },
   cookNowText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   responseContainer: {
-    marginTop: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 20,
-    borderRadius: 10,
+    borderRadius: 15,
   },
   responseText: {
     color: '#333',
     fontSize: 16,
+    lineHeight: 24,
   },
 });
