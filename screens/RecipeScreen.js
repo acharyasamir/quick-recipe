@@ -25,7 +25,7 @@ export default function RecipeScreen() {
     const prompt = `Please generate a list of ingredients and a recipe to prepare ${dishName}.`;
 
     try {
-      const apiKey = 'AIzaSyA5LJqA40iZuNb-A8oO4JPQcbYgyOyST4I'; // Replace with your API key
+      const apiKey = ''; // Replace with your API key
       // Initialize the Google Gemini API client
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
