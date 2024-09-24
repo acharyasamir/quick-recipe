@@ -19,28 +19,25 @@ export default function RecipeScreen() {
   const [loading, setLoading] = useState(true);
   const { saveRecipe } = useContext(RecipeContext);
 
-  // Function to parse and clean the API response
+  // Function to clean and parse the API response
   const cleanAndParseResponse = (responseText) => {
-    // Remove markdown symbols like **, ##, etc.
     let cleanedText = responseText
       .replace(/(\*\*|##|#)/g, '')  // Remove bold and headings
-      .replace(/^\s*\n/gm, '');     // Remove extra newlines
+      .replace(/^\s*\n/gm, '')      // Remove extra newlines
 
-    // Split ingredients and instructions by detecting keywords
     const ingredientsStartIndex = cleanedText.indexOf('Ingredients:');
     const instructionsStartIndex = cleanedText.indexOf('Instructions:');
     
     const ingredientsText = cleanedText.substring(ingredientsStartIndex, instructionsStartIndex).replace('Ingredients:', '').trim();
     const instructionsText = cleanedText.substring(instructionsStartIndex).replace('Instructions:', '').trim();
 
-    // Split the ingredients and instructions into arrays for easier rendering
-    const ingredients = ingredientsText.split('\n').map(item => item.trim()).filter(Boolean);
+    const ingredients = ingredientsText.split('\n').map(item => item.replace(/^\*\s*/, '').trim()).filter(Boolean);
     const instructions = instructionsText.split('\n').map(item => item.trim()).filter(Boolean);
 
     return { ingredients, instructions };
   };
 
-  // Function to call the Gemini API and fetch the recipe
+  // Function to fetch the recipe from Gemini API
   const fetchRecipeFromGemini = async () => {
     const prompt = `Please generate a list of ingredients and a recipe to prepare ${dishName}.`;
 
@@ -82,24 +79,21 @@ export default function RecipeScreen() {
 
           {/* Render Ingredients */}
           <Text style={styles.sectionTitle}>Ingredients:</Text>
-          <FlatList
-            data={response.ingredients}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-              <View style={styles.ingredientBox}>
-                <Text style={styles.ingredientText}>{item}</Text>
-              </View>
-            )}
-            horizontal={false} // Vertically stacked ingredient boxes
-            numColumns={2} // Display in two columns
-            contentContainerStyle={styles.ingredientsList}
-          />
+          <View style={styles.ingredientSection}>
+            {response.ingredients.map((ingredient, index) => (
+              <Text key={index} style={ingredient.startsWith('For the') ? styles.subSectionTitle : styles.ingredientText}>
+                {ingredient}
+              </Text>
+            ))}
+          </View>
 
           {/* Render Instructions */}
           <Text style={styles.sectionTitle}>Instructions:</Text>
-          {response.instructions.map((instruction, index) => (
-            <Text key={index} style={styles.instructionText}>{`${index + 1}. ${instruction}`}</Text>
-          ))}
+          <View style={styles.instructionsSection}>
+            {response.instructions.map((instruction, index) => (
+              <Text key={index} style={styles.instructionText}>{`${index + 1}. ${instruction}`}</Text>
+            ))}
+          </View>
 
           {/* Save Recipe Button */}
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveRecipe}>
@@ -111,7 +105,6 @@ export default function RecipeScreen() {
   );
 }
 
-// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -120,6 +113,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
+    backgroundColor: '#F5F5F5',
   },
   dishName: {
     fontSize: 28,
@@ -129,30 +123,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    color: '#FF6347',
+    marginVertical: 15,
   },
-  ingredientsList: {
+  subSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 10,
+  },
+  ingredientSection: {
+    backgroundColor: '#FFF0E0', // Light orange background for ingredients section
+    padding: 10,
+    borderRadius: 10,
     marginBottom: 20,
   },
-  ingredientBox: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: '#E6F2FF',
-    borderRadius: 20,
-    marginBottom: 10,
-    marginRight: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-  },
   ingredientText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#333',
+    marginBottom: 5,
+  },
+  instructionsSection: {
+    backgroundColor: '#EFEFEF', // Light gray background for instructions section
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 20,
   },
   instructionText: {
     fontSize: 16,
