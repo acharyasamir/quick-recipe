@@ -1,5 +1,3 @@
-// screens/RecipeScreen.js
-
 import React, { useEffect, useState, useContext } from 'react';
 import {
   StyleSheet,
@@ -8,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  FlatList,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { RecipeContext } from '../context/RecipeContext';
@@ -20,20 +19,41 @@ export default function RecipeScreen() {
   const [loading, setLoading] = useState(true);
   const { saveRecipe } = useContext(RecipeContext);
 
-  // Function to call the Gemini API and fetch a recipe for the dish
+  // Function to parse and clean the API response
+  const cleanAndParseResponse = (responseText) => {
+    // Remove markdown symbols like **, ##, etc.
+    let cleanedText = responseText
+      .replace(/(\*\*|##|#)/g, '')  // Remove bold and headings
+      .replace(/^\s*\n/gm, '');     // Remove extra newlines
+
+    // Split ingredients and instructions by detecting keywords
+    const ingredientsStartIndex = cleanedText.indexOf('Ingredients:');
+    const instructionsStartIndex = cleanedText.indexOf('Instructions:');
+    
+    const ingredientsText = cleanedText.substring(ingredientsStartIndex, instructionsStartIndex).replace('Ingredients:', '').trim();
+    const instructionsText = cleanedText.substring(instructionsStartIndex).replace('Instructions:', '').trim();
+
+    // Split the ingredients and instructions into arrays for easier rendering
+    const ingredients = ingredientsText.split('\n').map(item => item.trim()).filter(Boolean);
+    const instructions = instructionsText.split('\n').map(item => item.trim()).filter(Boolean);
+
+    return { ingredients, instructions };
+  };
+
+  // Function to call the Gemini API and fetch the recipe
   const fetchRecipeFromGemini = async () => {
     const prompt = `Please generate a list of ingredients and a recipe to prepare ${dishName}.`;
 
     try {
       const apiKey = ''; // Replace with your API key
-      // Initialize the Google Gemini API client
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-      // Send the dish prompt to the API and get the generated content (recipe)
       const result = await model.generateContent(prompt);
-      const recipeText = result.response.text();
-      setResponse(recipeText); // Store the response text in state
+      const recipeText = result.response.text(); // Ensure this part is correct based on SDK
+
+      const parsedResponse = cleanAndParseResponse(recipeText);
+      setResponse(parsedResponse);
     } catch (error) {
       console.error('Error fetching recipe:', error);
       setResponse('Failed to fetch recipe.');
@@ -54,25 +74,44 @@ export default function RecipeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#FF6347" />
-        ) : (
-          <>
-            <Text style={styles.dishName}>{dishName}</Text>
-            <Text style={styles.recipeText}>{response}</Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#FF6347" />
+      ) : (
+        <ScrollView contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.dishName}>{dishName}</Text>
 
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveRecipe}>
-              <Text style={styles.saveButtonText}>Save Recipe</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </ScrollView>
+          {/* Render Ingredients */}
+          <Text style={styles.sectionTitle}>Ingredients:</Text>
+          <FlatList
+            data={response.ingredients}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.ingredientBox}>
+                <Text style={styles.ingredientText}>{item}</Text>
+              </View>
+            )}
+            horizontal={false} // Vertically stacked ingredient boxes
+            numColumns={2} // Display in two columns
+            contentContainerStyle={styles.ingredientsList}
+          />
+
+          {/* Render Instructions */}
+          <Text style={styles.sectionTitle}>Instructions:</Text>
+          {response.instructions.map((instruction, index) => (
+            <Text key={index} style={styles.instructionText}>{`${index + 1}. ${instruction}`}</Text>
+          ))}
+
+          {/* Save Recipe Button */}
+          <TouchableOpacity style={styles.saveButton} onPress={handleSaveRecipe}>
+            <Text style={styles.saveButtonText}>Save Recipe</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
     </View>
   );
 }
 
-// Styles for RecipeScreen
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -89,11 +128,37 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  recipeText: {
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
+  },
+  ingredientsList: {
+    marginBottom: 20,
+  },
+  ingredientBox: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: '#E6F2FF',
+    borderRadius: 20,
+    marginBottom: 10,
+    marginRight: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  ingredientText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  instructionText: {
     fontSize: 16,
     lineHeight: 24,
     color: '#333',
-    marginBottom: 30,
+    marginBottom: 10,
   },
   saveButton: {
     backgroundColor: '#FF6347',
