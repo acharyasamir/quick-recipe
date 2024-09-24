@@ -1,6 +1,4 @@
-// screens/HomeScreen.js
-
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,93 +8,96 @@ import {
   FlatList,
   ImageBackground,
   ScrollView,
+  Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { RecipeContext } from '../context/RecipeContext';
+import { FontAwesome } from '@expo/vector-icons';  // For icons
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Sample data for popular dishes displayed as suggestions
-const popularDishes = [
-  { id: '1', name: 'Spaghetti Bolognese' },
-  { id: '2', name: 'Chicken Curry' },
-  { id: '3', name: 'Beef Stroganoff' },
+// Placeholder image URL for recommended dishes
+const placeholderImageUrl = 'https://www.allrecipes.com/thmb/mvO1mRRH1zTz1SvbwBCTz78CRJI=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/67700_RichPastaforthePoorKitchen_ddmfs_4x3_2284-220302ec8328442096df370dede357d7.jpg';
+
+// Sample data for recommended dishes
+const recommendedDishes = [
+  { id: '1', name: 'Spaghetti Bolognese', imageUrl: placeholderImageUrl },
+  { id: '2', name: 'Chicken Curry', imageUrl: placeholderImageUrl },
+  { id: '3', name: 'Creamy Pasta', imageUrl: placeholderImageUrl },
+  { id: '4', name: 'Grilled Salmon', imageUrl: placeholderImageUrl },
+  { id: '5', name: 'Vegetarian Stir Fry', imageUrl: placeholderImageUrl },
 ];
 
 export default function HomeScreen() {
-  const [dish, setDish] = useState('');
+  const [query, setQuery] = useState('');
   const navigation = useNavigation();
-  const { savedRecipes } = useContext(RecipeContext);
 
-  // Function to navigate to Recipe Screen
-  const handleCookNow = () => {
-    if (dish.trim()) {
-      navigation.navigate('Recipe', { dishName: dish });
+  const handleGenerateRecipe = () => {
+    if (query.trim()) {
+      navigation.navigate('Recipe', { dishName: query });
     } else {
-      alert('Please enter a dish name.');
+      alert('Please enter a recipe query.');
     }
   };
 
+  const renderRecommendedDish = ({ item }) => (
+    <TouchableOpacity style={styles.recommendationCard}>
+      <Image source={{ uri: item.imageUrl }} style={styles.recommendationImage} />
+      <Text style={styles.recommendationText}>{item.name}</Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <View style={styles.container}>
-      {/* Background image */}
+    <SafeAreaView style={styles.container}>
       <ImageBackground
-        source={{
-          uri: 'https://images.pexels.com/photos/1640770/pexels-photo-1640770.jpeg',
-        }}
+        source={{ uri: 'https://example.com/your-background-image.jpg' }}
         style={styles.background}
         resizeMode="cover"
       >
-        {/* Overlay */}
         <View style={styles.overlay}>
           <ScrollView contentContainerStyle={styles.contentContainer}>
-            {/* Header */}
-            <View style={styles.titleContainer}>
-              <Text style={styles.title}>Quick Recipe</Text>
-              <Text style={styles.tagline}>Your Personal Recipe Finder</Text>
-            </View>
+            {/* Header Section */}
+            <Text style={styles.title}>Quick Recipe</Text>
+            <Text style={styles.tagline}>Your Personal Recipe Finder</Text>
 
-            {/* Input Section */}
+            {/* Recipe Query Input */}
             <View style={styles.inputCard}>
-              <Text style={styles.inputPrompt}>What would you like to cook?</Text>
+              <Text style={styles.inputPrompt}>Generate Recipe</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter a dish name..."
+                placeholder="Enter a recipe..."
                 placeholderTextColor="#ccc"
-                value={dish}
-                onChangeText={setDish}
+                value={query}
+                onChangeText={setQuery}
               />
-
-              {/* Popular Dishes */}
-              <FlatList
-                data={popularDishes}
-                horizontal
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={styles.dishList}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.dishCard}
-                    onPress={() => setDish(item.name)}
-                  >
-                    <Text style={styles.dishText}>{item.name}</Text>
-                  </TouchableOpacity>
-                )}
-              />
+              <TouchableOpacity style={styles.generateButton} onPress={handleGenerateRecipe}>
+                <Text style={styles.generateButtonText}>Generate</Text>
+              </TouchableOpacity>
             </View>
 
-            {/* Buttons */}
-            <TouchableOpacity style={styles.cookNowButton} onPress={handleCookNow}>
-              <Text style={styles.cookNowText}>Cook Now!</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.myRecipesButton}
-              onPress={() => navigation.navigate('MyRecipes')}
-            >
-              <Text style={styles.myRecipesText}>My Recipes</Text>
-            </TouchableOpacity>
+            {/* Recommended Dishes */}
+            <Text style={styles.recommendationTitle}>Recommended for You</Text>
+            <FlatList
+              data={recommendedDishes}
+              horizontal
+              keyExtractor={(item) => item.id}
+              renderItem={renderRecommendedDish}
+              contentContainerStyle={styles.recommendationList}
+            />
           </ScrollView>
+
+          {/* Bottom Tab Bar */}
+          <View style={styles.tabBar}>
+            <TouchableOpacity style={styles.tabItem}>
+              <FontAwesome name="home" size={28} color="#FF6347" />
+              <Text style={styles.tabText}>Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.tabItem}>
+              <FontAwesome name="heart" size={28} color="#FF6347" />
+              <Text style={styles.tabText}>Saved Recipes</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ImageBackground>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -115,74 +116,87 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
     flexGrow: 1,
-    justifyContent: 'center',
-  },
-  titleContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
   },
   title: {
-    fontSize: 40,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   tagline: {
     fontSize: 20,
     color: '#ddd',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   inputCard: {
     marginBottom: 30,
+    alignItems: 'center',
   },
   inputPrompt: {
     fontSize: 22,
     color: '#fff',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   input: {
     height: 50,
+    width: '80%',
     borderColor: '#fff',
     borderWidth: 1,
     borderRadius: 25,
     paddingHorizontal: 20,
-    marginBottom: 20,
     color: '#fff',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    marginBottom: 20,
   },
-  dishList: {
-    flexGrow: 0,
-  },
-  dishCard: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  dishText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  cookNowButton: {
+  generateButton: {
     backgroundColor: '#FF6347',
     borderRadius: 25,
     paddingVertical: 15,
-    alignItems: 'center',
-    marginBottom: 15,
+    paddingHorizontal: 30,
   },
-  cookNowText: {
+  generateButtonText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
   },
-  myRecipesButton: {
-    backgroundColor: '#fff',
-    borderRadius: 25,
-    paddingVertical: 15,
+  recommendationTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+    marginLeft: 20,
+  },
+  recommendationList: {
+    paddingLeft: 20,
+  },
+  recommendationCard: {
+    marginRight: 15,
     alignItems: 'center',
   },
-  myRecipesText: {
+  recommendationImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+  },
+  recommendationText: {
+    marginTop: 5,
+    fontSize: 14,
+    color: '#fff',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+  },
+  tabItem: {
+    alignItems: 'center',
+  },
+  tabText: {
+    fontSize: 12,
     color: '#FF6347',
-    fontSize: 20,
-    fontWeight: 'bold',
+    marginTop: 5,
   },
 });
