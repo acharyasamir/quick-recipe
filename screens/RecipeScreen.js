@@ -39,7 +39,7 @@ export default function RecipeScreen() {
 
   // Function to fetch the recipe from Gemini API
   const fetchRecipeFromGemini = async () => {
-    const prompt = `Please generate a list of ingredients and a recipe to prepare ${dishName}.`;
+    const prompt = `Please generate a list of ingredients and a recipe to prepare ${dishName}. Give the ingredients as a list. For the instructions, just give instructions for the recipe and no extra information like tips or any other info. Your response will be used in React Native app so it is important to receive a response in a fixed format. Also do not give numbering for the instructions. just give it as separate sentences. Also, please generate your response in whatever the language the input is in.`;
 
     try {
       const apiKey = ''; // Replace with your API key
@@ -79,19 +79,22 @@ export default function RecipeScreen() {
 
           {/* Render Ingredients */}
           <Text style={styles.sectionTitle}>Ingredients:</Text>
-          <View style={styles.ingredientSection}>
+          <View style={styles.ingredientsContainer}>
             {response.ingredients.map((ingredient, index) => (
-              <Text key={index} style={ingredient.startsWith('For the') ? styles.subSectionTitle : styles.ingredientText}>
-                {ingredient}
-              </Text>
+              <View key={index} style={styles.ingredientItem}>
+                <Text style={styles.bullet}>{'\u2022'}</Text>
+                <Text style={styles.ingredientText}>{ingredient}</Text>
+              </View>
             ))}
           </View>
 
           {/* Render Instructions */}
           <Text style={styles.sectionTitle}>Instructions:</Text>
-          <View style={styles.instructionsSection}>
+          <View style={styles.instructionsContainer}>
             {response.instructions.map((instruction, index) => (
-              <Text key={index} style={styles.instructionText}>{`${index + 1}. ${instruction}`}</Text>
+              <Text key={index} style={styles.instructionText}>
+                {`${index + 1}. ${instruction}`}
+              </Text>
             ))}
           </View>
 
@@ -105,6 +108,7 @@ export default function RecipeScreen() {
   );
 }
 
+// Styles for the component
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -113,7 +117,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 20,
-    backgroundColor: '#F5F5F5',
   },
   dishName: {
     fontSize: 28,
@@ -123,37 +126,37 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   sectionTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
+    marginBottom: 10,
     color: '#FF6347',
-    marginVertical: 15,
   },
-  subSectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 10,
-  },
-  ingredientSection: {
-    backgroundColor: '#FFF0E0', // Light orange background for ingredients section
-    padding: 10,
-    borderRadius: 10,
+  ingredientsContainer: {
     marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  ingredientItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  bullet: {
+    fontSize: 18,
+    color: '#FF6347', // Orange bullet points
+    marginRight: 5,
   },
   ingredientText: {
     fontSize: 18,
     color: '#333',
-    marginBottom: 5,
   },
-  instructionsSection: {
-    backgroundColor: '#EFEFEF', // Light gray background for instructions section
-    padding: 10,
+  instructionsContainer: {
+    backgroundColor: '#F8F8F8',
     borderRadius: 10,
-    marginBottom: 20,
+    padding: 15,
   },
   instructionText: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 18,
+    lineHeight: 26,
     color: '#333',
     marginBottom: 10,
   },
@@ -164,6 +167,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'center',
     width: '60%',
+    marginTop: 20,
   },
   saveButtonText: {
     color: '#fff',
