@@ -107,10 +107,11 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginHorizontal: 20,
-    marginTop: 20,
+    marginTop: 40,  // Add more margin from the top
+    alignItems: 'center', // Center the text
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 28,  // Larger font for the title
     fontWeight: 'bold',
     color: '#f64e32',
   },
