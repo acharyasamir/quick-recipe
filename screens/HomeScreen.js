@@ -1,202 +1,126 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   TextInput,
-  TouchableOpacity,
   FlatList,
-  ImageBackground,
-  ScrollView,
-  Image
+  TouchableOpacity,
+  Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { FontAwesome } from '@expo/vector-icons';  // For icons
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesome } from '@expo/vector-icons';
+import axios from 'axios';
 
-// Placeholder image URL for recommended dishes
-const placeholderImageUrl = 'https://www.allrecipes.com/thmb/mvO1mRRH1zTz1SvbwBCTz78CRJI=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/67700_RichPastaforthePoorKitchen_ddmfs_4x3_2284-220302ec8328442096df370dede357d7.jpg';
-
-// Sample data for recommended dishes
-const recommendedDishes = [
-  { id: '1', name: 'Spaghetti Bolognese', imageUrl: placeholderImageUrl },
-  { id: '2', name: 'Chicken Curry', imageUrl: placeholderImageUrl },
-  { id: '3', name: 'Creamy Pasta', imageUrl: placeholderImageUrl },
-  { id: '4', name: 'Grilled Salmon', imageUrl: placeholderImageUrl },
-  { id: '5', name: 'Vegetarian Stir Fry', imageUrl: placeholderImageUrl },
-];
-
-export default function HomeScreen() {
+const HomeScreen = () => {
   const [query, setQuery] = useState('');
-  const navigation = useNavigation();
+  const [meals, setMeals] = useState([]);
 
-  const handleGenerateRecipe = () => {
-    if (query.trim()) {
-      navigation.navigate('Recipe', { dishName: query });
-    } else {
-      alert('Please enter a recipe query.');
+  useEffect(() => {
+    fetchRecommendedRecipes();
+  }, []);
+
+  const fetchRecommendedRecipes = async () => {
+    try {
+      const response = await axios.get('https://www.themealdb.com/api/json/v1/1/search.php?f=b');
+      setMeals(response.data.meals);
+    } catch (error) {
+      console.error(error);
     }
   };
 
-  const renderRecommendedDish = ({ item }) => (
-    <TouchableOpacity style={styles.recommendationCard}>
-      <Image source={{ uri: item.imageUrl }} style={styles.recommendationImage} />
-      <Text style={styles.recommendationText}>{item.name}</Text>
+  const renderRecipe = ({ item }) => (
+    <TouchableOpacity style={styles.card}>
+      <Image source={{ uri: item.strMealThumb }} style={styles.image} />
+      <Text style={styles.text}>{item.strMeal}</Text>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={{ uri: 'https://example.com/your-background-image.jpg' }}
-        style={styles.background}
-        resizeMode="cover"
-      >
-        <View style={styles.overlay}>
-          <ScrollView contentContainerStyle={styles.contentContainer}>
-            {/* Header Section */}
-            <Text style={styles.title}>Quick Recipe</Text>
-            <Text style={styles.tagline}>Your Personal Recipe Finder</Text>
+      <View style={styles.searchContainer}>
+        <FontAwesome name="search" size={20} color="#ccc" style={styles.searchIcon} />
+        <TextInput
+          style={styles.input}
+          placeholder="Search for a recipe..."
+          value={query}
+          onChangeText={setQuery}
+        />
+      </View>
 
-            {/* Recipe Query Input */}
-            <View style={styles.inputCard}>
-              <Text style={styles.inputPrompt}>Generate Recipe</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter a recipe..."
-                placeholderTextColor="#ccc"
-                value={query}
-                onChangeText={setQuery}
-              />
-              <TouchableOpacity style={styles.generateButton} onPress={handleGenerateRecipe}>
-                <Text style={styles.generateButtonText}>Generate</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Recommended Dishes */}
-            <Text style={styles.recommendationTitle}>Recommended for You</Text>
-            <FlatList
-              data={recommendedDishes}
-              horizontal
-              keyExtractor={(item) => item.id}
-              renderItem={renderRecommendedDish}
-              contentContainerStyle={styles.recommendationList}
-            />
-          </ScrollView>
-
-          {/* Bottom Tab Bar */}
-          <View style={styles.tabBar}>
-            <TouchableOpacity style={styles.tabItem}>
-              <FontAwesome name="home" size={28} color="#FF6347" />
-              <Text style={styles.tabText}>Home</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.tabItem}>
-              <FontAwesome name="heart" size={28} color="#FF6347" />
-              <Text style={styles.tabText}>Saved Recipes</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ImageBackground>
+      {/* Use FlatList without nesting inside a ScrollView */}
+      <FlatList
+        data={meals}
+        keyExtractor={(item) => item.idMeal}
+        renderItem={renderRecipe}
+        numColumns={2}
+        ListHeaderComponent={() => (
+          <Text style={styles.header}>Recommended Recipes</Text>
+        )}
+        contentContainerStyle={styles.listContainer}
+      />
     </SafeAreaView>
   );
-}
+};
 
-// Styles for HomeScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
   },
-  background: {
-    flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-  },
-  contentContainer: {
-    padding: 20,
-    flexGrow: 1,
-  },
-  title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  tagline: {
-    fontSize: 20,
-    color: '#ddd',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  inputCard: {
-    marginBottom: 30,
+  searchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    margin: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
-  inputPrompt: {
-    fontSize: 22,
-    color: '#fff',
-    marginBottom: 10,
+  searchIcon: {
+    marginRight: 10,
   },
   input: {
-    height: 50,
-    width: '80%',
-    borderColor: '#fff',
-    borderWidth: 1,
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    color: '#fff',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 20,
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
   },
-  generateButton: {
-    backgroundColor: '#FF6347',
-    borderRadius: 25,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-  },
-  generateButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  recommendationTitle: {
+  header: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 10,
+    color: '#333',
+    marginVertical: 10,
     marginLeft: 20,
   },
-  recommendationList: {
-    paddingLeft: 20,
+  listContainer: {
+    paddingHorizontal: 10,
   },
-  recommendationCard: {
-    marginRight: 15,
-    alignItems: 'center',
+  card: {
+    flex: 1,
+    backgroundColor: '#fff',
+    margin: 5,
+    padding: 10,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
   },
-  recommendationImage: {
-    width: 100,
+  image: {
+    width: '100%',
     height: 100,
     borderRadius: 10,
+    marginBottom: 10,
   },
-  recommendationText: {
-    marginTop: 5,
-    fontSize: 14,
-    color: '#fff',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-  },
-  tabItem: {
-    alignItems: 'center',
-  },
-  tabText: {
-    fontSize: 12,
-    color: '#FF6347',
-    marginTop: 5,
+  text: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
   },
 });
+
+export default HomeScreen;
