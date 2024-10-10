@@ -8,15 +8,18 @@ import {
   FlatList,
   Image,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FontAwesome } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
+import { GoogleGenerativeAI } from '@google/generative-ai'; // Import the Gemini API SDK
 
 export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -38,13 +41,60 @@ export default function HomeScreen() {
     }
   };
 
-  const handleGenerateRecipe = () => {
-    if (query.trim() === '') {
-      alert('Please enter a valid recipe name');
-      return;
+// Function to fetch the recipe from Gemini API
+const fetchRecipeFromGemini = async () => {
+  const prompt = `Please generate a list of ingredients and a recipe to prepare ${query}. 
+  Provide the ingredients as a list and the instructions without numbering. Respond in JSON format 
+  with keys "ingredients" and "instructions". If the input is invalid, return a JSON object with 
+  an error message like "Please enter a valid dish name."`;
+
+  setLoading(true);  // Set loading state
+
+  try {
+    const apiKey = '';
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const result = await model.generateContent(prompt);
+    let recipeResponse = result.response.text();
+
+    // Handle Gemini response that may be wrapped in backticks
+    if (recipeResponse.startsWith('```json')) {
+      recipeResponse = recipeResponse.replace(/```json|```/g, ''); // Clean up backticks
     }
-    navigation.navigate('Recipe', { dishName: query });
-  };
+
+    // Parse the Gemini response
+    try {
+      const parsedResponse = JSON.parse(recipeResponse);
+      if (parsedResponse.error) {
+        Alert.alert('Error', parsedResponse.error);  // Handle invalid input
+      } else {
+        // Navigate to RecipeScreen and pass the generated recipe
+        navigation.navigate('Recipe', { dishName: query, ingredients: parsedResponse.ingredients, instructions: parsedResponse.instructions });
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response as JSON:', parseError);
+      Alert.alert('Error', 'Gemini returned invalid response.');
+    }
+  } catch (error) {
+    console.error('Error fetching recipe from Gemini:', error);
+    Alert.alert('Error', 'Failed to fetch recipe.');
+  } finally {
+    setLoading(false);  // Clear loading state
+  }
+};
+
+
+const handleGenerateRecipe = () => {
+  if (query.trim() === '') {
+    Alert.alert('Error', 'Please enter a valid recipe name');
+    return;
+  }
+
+  // Use Gemini API for generating the recipe
+  fetchRecipeFromGemini();
+};
+
 
   const renderRecommendedDish = ({ item }) => (
     <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Recipe', { dishName: item.strMeal })}>
@@ -74,7 +124,7 @@ export default function HomeScreen() {
               onChangeText={setQuery}
             />
             <TouchableOpacity style={styles.generateButton} onPress={handleGenerateRecipe}>
-              <Text style={styles.generateButtonText}>Generate</Text>
+              <Text style={styles.generateButtonText}>{loading ? 'Generating...' : 'Generate'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -107,11 +157,11 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginHorizontal: 20,
-    marginTop: 40,  // Add more margin from the top
-    alignItems: 'center', // Center the text
+    marginTop: 40,
+    alignItems: 'center', 
   },
   headerTitle: {
-    fontSize: 28,  // Larger font for the title
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#f64e32',
   },
